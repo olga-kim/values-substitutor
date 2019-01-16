@@ -2,12 +2,13 @@ import logic.ExecutionParamsProcessor;
 import logic.ValuesReplacer;
 import model.ExecutionParams;
 import model.Messages;
-import org.dom4j.DocumentException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -24,18 +25,19 @@ public class ReplaceParametersTest {
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage(Messages.HELP.value);
 
-        ExecutionParamsProcessor executionParamsProcessor = new ExecutionParamsProcessor();
-        executionParamsProcessor.parseParams(Arrays.asList("-help"));
+        ExecutionParamsProcessor.parseParams(Arrays.asList("-help"));
     }
 
     @Test
-    public void checkParams() throws DocumentException {
-        ExecutionParamsProcessor executionParamsProcessor = new ExecutionParamsProcessor();
-        Map<ExecutionParams, String> parsedParams = executionParamsProcessor.parseParams(Arrays.asList("-i", "src/test/resources/input.xml", "-p", "src/test/resources/example.properties", "-o", "src/test/resources/output.xml"));
+    public void checkParams() {
+        String routeDir = "src/test/resources/positive/";
+        String outputFilePath = routeDir + "output-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss.SSS")) + ".xml";
 
-        ValuesReplacer.process(parsedParams);
+        ValuesReplacer.process(
+                ExecutionParamsProcessor.parseParams(
+                        Arrays.asList("-i", routeDir + "input.xml", "-p", routeDir + "example.properties", "-o", outputFilePath)));
 
-        assertTrue("", new File("src/test/resources/output.xml").exists());
+        assertTrue("Output file was not created", new File(outputFilePath).exists());
         //TODO check output file structure
     }
 }

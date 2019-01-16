@@ -7,7 +7,8 @@ public enum ExecutionParams {
     HELP("-help"),
     INOUT("-i"),
     OUTPUT("-o"),
-    PROPERTIES("-p");
+    PROPERTIES("-p"),
+    UNKNOWN("");
 
     public final String value;
 
@@ -19,6 +20,6 @@ public enum ExecutionParams {
         return Arrays.stream(ExecutionParams.values())
                 .filter(it -> it.value.equals(value))
                 .findFirst()
-                .orElse(null);
+                .orElse(UNKNOWN);
     }
 }

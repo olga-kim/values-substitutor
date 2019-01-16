@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class ExecutionParamsProcessor {
 
-    public Map<ExecutionParams, String> parseParams(List<String> args) {
+    public static Map<ExecutionParams, String> parseParams(List<String> args) {
         if (args.size() == 1) {
             if (args.get(0).equals(ExecutionParams.HELP.value)) {
                 throw new IllegalArgumentException(Messages.HELP.value);

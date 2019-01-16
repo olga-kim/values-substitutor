@@ -1,6 +1,8 @@
 package logic;
 
 import model.ExecutionParams;
+import model.GeneratedValues;
+import model.Messages;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -14,8 +16,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ValuesReplacer {
+
+    private static Logger log = Logger.getLogger(ValuesReplacer.class.getName());
 
     private static Properties readProperties(File fileName) {
         Properties props = new Properties();
@@ -23,9 +29,9 @@ public class ValuesReplacer {
         try (FileReader reader = new FileReader(fileName)) {
             props.load(reader);
         } catch (FileNotFoundException e) {
-            System.out.println("Properties file was not found");
+            log.log(Level.SEVERE, String.format(Messages.FILE_NOT_FOUND.value, fileName));
         } catch (IOException e) {
-            System.out.println("I/O error was found");
+            log.log(Level.SEVERE, String.format(Messages.IO_ERROR.value, "reading .properties file"));
         }
 
         return props;
@@ -38,19 +44,23 @@ public class ValuesReplacer {
                 replace(innerIterator.next(), props);
             }
         } else {
-            String extractedValue = props.getProperty("\"" + element.getText()
-                    .replaceAll("\\{|\\}|\\$", "") + "\"")
-                    .replaceAll("\"", "");
-            extractedValue = extractedValue.contains("<") ? generateValue(extractedValue) : extractedValue;
-            element.setText(extractedValue);
+            try {
+                String extractedValue = props.getProperty("\"" + element.getText()
+                        .replaceAll("\\{|\\}|\\$", "") + "\"")
+                        .replaceAll("\"", "");
+                extractedValue = extractedValue.contains("<") ? generateValue(extractedValue) : extractedValue;
+                element.setText(extractedValue);
+            } catch (NullPointerException e) {
+                throw new IllegalArgumentException(Messages.PROPERTY_NOT_FOUND.value);
+            }
         }
     }
 
     private static String generateValue(String property) {
-        if (property.toUpperCase().contains("ID")) {
+        if (property.toUpperCase().contains(GeneratedValues.ID.name())) {
             return String.valueOf(UUID.randomUUID());
         }
-        if (property.toUpperCase().contains("DATETIME")) {
+        if (property.toUpperCase().contains(GeneratedValues.DATETIME.name())) {
             return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"));
         } else return RandomStringUtils.randomAlphabetic(10);
     }
@@ -58,14 +68,19 @@ public class ValuesReplacer {
     private static File getCheckedFile(String filePath) {
         File file = new File(filePath);
         if (!file.exists() || file.isDirectory()) {
-            throw new IllegalArgumentException(filePath + " is not a valid file path");
+            throw new IllegalArgumentException(String.format(Messages.FILE_NOT_FOUND.value, filePath));
         }
         return file;
     }
 
-    public static void process(Map<ExecutionParams, String> parsedParams) throws DocumentException {
+    public static void process(Map<ExecutionParams, String> parsedParams) {
         SAXReader reader = new SAXReader();
-        Document document = reader.read(getCheckedFile(parsedParams.get(ExecutionParams.INOUT)));
+        Document document = null;
+        try {
+            document = reader.read(getCheckedFile(parsedParams.get(ExecutionParams.INOUT)));
+        } catch (DocumentException e) {
+            throw new IllegalArgumentException(Messages.INVALID_XML.value);
+        }
         Element description = document.getRootElement();
         replace(description, readProperties(getCheckedFile(parsedParams.get(ExecutionParams.PROPERTIES))));
         writeResult(parsedParams.get(ExecutionParams.OUTPUT), description.asXML());
@@ -75,8 +90,10 @@ public class ValuesReplacer {
         try (FileWriter writer = new FileWriter(outputFilePath)) {
             writer.write(result);
             writer.flush();
+        } catch (FileNotFoundException ex) {
+            throw new IllegalArgumentException(String.format(Messages.INVALID_FILE_NAME.value, outputFilePath));
         } catch (IOException e) {
-            System.out.println("Error was found while writing result");
+            log.log(Level.SEVERE, String.format(Messages.IO_ERROR.value, "writing result"));
         }
     }
 }
