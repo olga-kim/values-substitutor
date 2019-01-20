@@ -5,7 +5,7 @@ import java.util.Arrays;
 public enum ExecutionParams {
 
     HELP("-help"),
-    INOUT("-i"),
+    INPUT("-i"),
     OUTPUT("-o"),
     PROPERTIES("-p"),
     UNKNOWN("");

@@ -48,7 +48,7 @@ public class ValuesReplacer {
                 String extractedValue = props.getProperty("\"" + element.getText()
                         .replaceAll("\\{|\\}|\\$", "") + "\"")
                         .replaceAll("\"", "");
-                extractedValue = extractedValue.contains("<") ? generateValue(extractedValue) : extractedValue;
+                extractedValue = extractedValue.startsWith("<") && extractedValue.endsWith(">") ? generateValue(extractedValue) : extractedValue;
                 element.setText(extractedValue);
             } catch (NullPointerException e) {
                 throw new IllegalArgumentException(Messages.PROPERTY_NOT_FOUND.value);
@@ -75,11 +75,12 @@ public class ValuesReplacer {
 
     public static void process(Map<ExecutionParams, String> parsedParams) {
         SAXReader reader = new SAXReader();
-        Document document = null;
+        Document document;
+        File inputFile = getCheckedFile(parsedParams.get(ExecutionParams.INPUT));
         try {
-            document = reader.read(getCheckedFile(parsedParams.get(ExecutionParams.INOUT)));
+            document = reader.read(inputFile);
         } catch (DocumentException e) {
-            throw new IllegalArgumentException(Messages.INVALID_XML.value);
+            throw new IllegalArgumentException(String.format(Messages.INVALID_XML.value, inputFile.getName()));
         }
         Element description = document.getRootElement();
         replace(description, readProperties(getCheckedFile(parsedParams.get(ExecutionParams.PROPERTIES))));

@@ -17,7 +17,7 @@ public class ExecutionParamsProcessor {
                 throw new IllegalArgumentException(Messages.INVALID_PARAMS.value);
             }
         } else {
-            if (args.contains(ExecutionParams.INOUT.value)
+            if (args.contains(ExecutionParams.INPUT.value)
                     && args.contains(ExecutionParams.OUTPUT.value)
                     && args.contains(ExecutionParams.PROPERTIES.value)
                     && args.size() == 6) {
@@ -27,8 +27,8 @@ public class ExecutionParamsProcessor {
                     String paramValue = args.get(i + 1);
 
                     switch (ExecutionParams.findByValue(args.get(i))) {
-                        case INOUT:
-                            parsedParams.put(ExecutionParams.INOUT, paramValue);
+                        case INPUT:
+                            parsedParams.put(ExecutionParams.INPUT, paramValue);
                             break;
                         case OUTPUT:
                             parsedParams.put(ExecutionParams.OUTPUT, paramValue);
